@@ -1,0 +1,59 @@
+#!/bin/bash
+# right 2 stereo mix
+version=1.1
+unset dependencies
+dependencies=(ffmpeg ffprobe)
+
+scriptdir=$(dirname "${0}")
+. "${scriptdir}/mmfunctions" || { echo "Missing '${scriptdir}/mmfunctions'. Exiting." ; exit 1 ;};
+
+usage(){
+    echo
+    echo "$(basename "${0}") ${version}"
+    echo "This application takes an input video file(s) and produces outputs that are map the right channel of the input to a stereo mix in the output."
+    echo "Dependencies: ${dependencies[@]}"
+    echo "Usage: $(basename "${0}") file1 [ file2 ...]"
+    echo
+    exit
+}
+[ "${#}" = 0 ] && usage
+check_dependencies "${dependencies[@]}"
+
+cleanup(){
+    _log -a "Process aborted"
+    exit 1
+}
+
+# local variables
+suffix="_right2stereo"
+
+trap cleanup SIGHUP SIGINT SIGTERM
+_log -b
+
+while [ "${*}" != "" ] ; do
+
+    sourcefile="${1}"
+    name=$(basename "${1}")
+
+    get_codectagstring
+    unset ffmpeg_opts
+    ffmpeg_opts+=(-c:v copy -c:a pcm_s24be -ar 48000 -ac 2)
+    get_audio_index "${sourcefile}"
+    ffmpeg_opts+=(-map_channel 0.${audio_index_1}.1)
+    if [ "${codec_tag_string}" = "mpeg" ] ; then
+        extension="mxf"
+    else
+        extension="mov"
+    fi
+
+    output_movie="${sourcefile%.*}${suffix}.${extension}"
+    if [ -f "${output_movie}" ] ; then
+        report -wt "The intended output of $(basename "${0}") already exists. Skipping for now. Please delete ${output_movie} and rerun or figure out why you are trying to do this."
+    else
+        report -dt "Generating ${output_movie} ... with these options ${ffmpeg_opts[*]}"
+        ffmpeg -i "${sourcefile}" "${ffmpeg_opts[@]}" "${output_movie}"
+        report -dt "$(basename "${0}") is done with ${name}."
+    fi
+    shift
+done
+_log -e
