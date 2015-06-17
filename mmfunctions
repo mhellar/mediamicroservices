@@ -460,6 +460,7 @@ has_first_two_tracks_mono(){
 
 get_audio_index(){
     # get ffmpeg's index value of the first audio stream. Useful for do custom channel mappings.
+    audio_index_0=$(ffprobe "${1}" -show_streams -select_streams a:0 1> /dev/null | grep index= | cut -d = -f 2)
     audio_index_1=$(ffprobe "${1}" -show_streams -select_streams a:0 2> /dev/null | grep index= | cut -d = -f 2)
     audio_index_2=$(ffprobe "${1}" -show_streams -select_streams a:1 2> /dev/null | grep index= | cut -d = -f 2)
 }

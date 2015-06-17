@@ -39,7 +39,7 @@ while [ "${*}" != "" ] ; do
     unset ffmpeg_opts
     ffmpeg_opts+=(-c:v copy -c:a pcm_s24be -ar 48000 -ac 2)
     get_audio_index "${sourcefile}"
-    ffmpeg_opts+=(-map_channel 0.${audio_index_1}.1)
+    ffmpeg_opts+=(-map_channel 0.${audio_index_1}.1 -map_channel 0.${audio_index_1}.1)
     if [ "${codec_tag_string}" = "mpeg" ] ; then
         extension="mxf"
     else
